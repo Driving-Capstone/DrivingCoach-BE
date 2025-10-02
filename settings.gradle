@@ -1,0 +1,17 @@
+// rootProject.name = 'drivingcoach'
+
+/*
+ * ✅ settings.gradle
+ *
+ * Gradle 다중/단일 프로젝트에서 "루트 프로젝트 이름"을 정의합니다.
+ * - IDE(인텔리J) 프로젝트 트리와 생성되는 산출물 이름 등에 사용됩니다.
+ * - 멀티모듈 구성이 아니라면 include(...)는 필요 없습니다.
+ */
+
+rootProject.name = "driving-coach-backend"
+
+/*
+ * (멀티모듈 예시가 필요하다면 아래처럼 사용)
+ * include("app", "core", "infrastructure")
+ * project(":app").name = "driving-coach-app"
+ */

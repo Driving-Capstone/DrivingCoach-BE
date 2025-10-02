@@ -1,0 +1,116 @@
+/*
+ * ✅ build.gradle (Groovy DSL)
+ *
+ * 스프링 부트 3.x + Java 17 기준의 빌드 스크립트입니다.
+ * - Web/MVC, Validation, Security, JPA, WebSocket
+ * - DB(MySQL/H2), JWT(jjwt 0.12.x), AWS S3(SDK v2)
+ * - Swagger(springdoc-openapi)
+ * - Lombok, 테스트 의존성
+ *
+ * 사용 팁
+ * - 로컬 개발은 H2, 운영은 MySQL 사용을 권장합니다(프로필 분리).
+ * - jjwt 0.12.x API에 맞춰 JwtUtil을 구현했습니다(서명/파서 API가 0.11.x와 다릅니다).
+ * - AWS SDK v2는 BOM을 통해 버전 정합성을 맞춥니다.
+ */
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.3'    // 부트 버전(자바 17 이상 필요)
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.drivingcoach'
+version = '0.0.1-SNAPSHOT'
+
+/* Java Toolchain
+ * - 팀/CI 환경 간 Java 버전 일치 보장
+ * - Spring Boot 3.x → 최소 Java 17
+ */
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+/* 버전 상수
+ * - 운영 중 헷갈리지 않게 주요 외부 라이브러리 버전을 변수로 고정합니다.
+ */
+ext {
+    jjwtVersion     = '0.12.5'        // JWT (io.jsonwebtoken)
+    springdocVersion= '2.5.0'         // Swagger UI (springdoc-openapi)
+    awsSdkVersion   = '2.25.54'       // AWS SDK v2 (BOM으로 관리)
+}
+
+dependencies {
+    /* --- Spring Boot Starters --- */
+    implementation 'org.springframework.boot:spring-boot-starter-web'          // MVC/JSON
+    implementation 'org.springframework.boot:spring-boot-starter-validation'   // Jakarta Validation
+    implementation 'org.springframework.boot:spring-boot-starter-security'     // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'     // JPA/Hibernate
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'    // WebSocket
+
+    /* --- Database Driver --- */
+    runtimeOnly 'com.mysql:mysql-connector-j'  // 운영: MySQL
+    runtimeOnly 'com.h2database:h2'            // 로컬: H2 (in-memory/file)
+
+    /* --- JWT (jjwt 0.12.x) ---
+     * - api 는 compile-time
+     * - impl/jackson 은 runtimeOnly 로 추가
+     * - 0.12.x는 Jwts.SIG, verifyWith(...) 등 최신 API 사용
+     */
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    runtimeOnly   "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    runtimeOnly   "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}" // JSON 직렬화/역직렬화
+
+    /* --- AWS SDK v2 (S3) ---
+     * - BOM으로 버전 정합성 유지
+     * - S3Client 사용
+     */
+    implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+    implementation 'software.amazon.awssdk:s3'
+
+    /* --- Swagger / OpenAPI (springdoc) ---
+     * - /swagger-ui/index.html
+     * - /v3/api-docs
+     */
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    /* --- Lombok ---
+     * - IDE에서 Annotation processing 활성화 필요
+     */
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    /* --- Test --- */
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+/* annotationProcessor 구성 (Lombok 등) */
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+/* 테스트 플랫폼 (JUnit 5) */
+tasks.test {
+    useJUnitPlatform()
+}
+
+/* (선택) 빌드 결과물 이름 커스터마이징
+bootJar {
+    archiveFileName = "driving-coach-${version}.jar"
+}
+*/
+
+/* (선택) 자바 컴파일러 파라미터 메타데이터 내보내기
+ * - 컨트롤러의 파라미터 이름 유지 등에 유용
+ */
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-parameters"
+}

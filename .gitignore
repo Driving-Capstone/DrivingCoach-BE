@@ -1,0 +1,125 @@
+# ============================================
+# ✅ .gitignore for Spring Boot + Gradle + IntelliJ
+# --------------------------------------------
+# - 자바/그레이들/인텔리J/H2/로그/OS/도커 무시 패턴 포함
+# - 필요 시 팀 규칙에 맞게 조정하세요.
+# ============================================
+
+# ---- Java / Build ----
+*.class
+*.log
+*.ctxt
+hs_err_pid*
+replay_pid*
+
+# ---- Gradle ----
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/**/build/   # (서브모듈 src 하위 build 는 보통 없음, 안전용)
+gradle-app.setting
+
+# Gradle Wrapper OS 권한 파일 (자동 생성)
+gradlew
+gradlew.bat
+
+# ---- Maven (혹시 혼용 시) ----
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
+# ---- IntelliJ IDEA ----
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IntelliJ local history, shelf
+.idea/**/shelf/
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/dictionaries
+.idea/**/httpRequests
+.idea/**/dataSources
+.idea/**/sqlDataSources.xml
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/gradle.xml
+.idea/**/libraries/
+
+# ---- VS Code (사용 시) ----
+.vscode/
+.history/
+
+# ---- OS-specific ----
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---- Logs / Temp ----
+logs/
+*.log
+*.tmp
+tmp/
+*.swp
+*.swo
+
+# ---- Spring / App ----
+# H2 database files
+*.h2.db
+*.mv.db
+*.trace.db
+
+# Application local files
+.env
+.env.*
+*.local.yml
+application-local.yml
+
+# ---- Docker ----
+/docker/**/data/
+**/*.pid
+**/*.seed
+
+# ---- Coverage / Reports ----
+/coverage/
+*.lcov
+jacoco.exec
+/build/reports/
+
+# ---- Generated resources ----
+/src/main/resources/static/**
+/src/main/resources/public/**
+!/src/main/resources/static/.keep
+!/src/main/resources/public/.keep
+
+# ---- Uploads / Artifacts (runtime) ----
+/uploads/
+/files/
+/tmp/
+
+# ---- AWS / Keys (절대 커밋 금지) ----
+**/credentials
+**/secrets/*
+**/secret/*
+*.pem
+*.key
+*.p12
+*.jks
+
+# ---- Node (프론트 혼재 시) ----
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
