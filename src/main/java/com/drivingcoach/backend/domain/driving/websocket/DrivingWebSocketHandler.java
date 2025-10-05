@@ -1,7 +1,7 @@
 package com.drivingcoach.backend.domain.driving.websocket;
 
 import com.drivingcoach.backend.global.util.S3Uploader;
-import com.drivingcoach.backend.global.util.JwtUtil;
+import com.drivingcoach.backend.global.util.JWTUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final S3Uploader s3Uploader;
-    private final JwtUtil jwtUtil;
+    private final JWTUtil jwtUtil;
 
     /** 세션ID → 상태 */
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -174,9 +174,9 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
                 if (arr.length == 2 && arr[0].equals("token")) {
                     String token = java.net.URLDecoder.decode(arr[1], java.nio.charset.StandardCharsets.UTF_8);
                     if (token.startsWith("Bearer ")) token = token.substring(7);
-                    if (jwtUtil.validateAccessToken(token)) {
-                        String loginId = jwtUtil.getLoginIdFromToken(token);
-                        Long userId = jwtUtil.getUserIdFromAccessToken(token);
+                    if (jwtUtil.isValid(token)) {
+                        String loginId = jwtUtil.getLoginId(token);
+                        Long userId = Long.parseLong(jwtUtil.getUserId(token));
                         return new AuthInfo(userId, loginId);
                     }
                 }

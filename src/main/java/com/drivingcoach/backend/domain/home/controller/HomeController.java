@@ -1,7 +1,7 @@
 package com.drivingcoach.backend.domain.home.controller;
 
 import com.drivingcoach.backend.domain.home.service.HomeService;
-import com.drivingcoach.backend.domain.home.dto.response.WeeklyStatusResponse;
+import com.drivingcoach.backend.domain.home.domain.dto.response.WeeklyStatusResponse;
 import com.drivingcoach.backend.domain.user.domain.CustomUserDetails;
 import com.drivingcoach.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;

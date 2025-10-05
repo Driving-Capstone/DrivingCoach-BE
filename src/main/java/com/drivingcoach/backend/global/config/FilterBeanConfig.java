@@ -1,17 +1,18 @@
 package com.drivingcoach.backend.global.config;
 
 import com.drivingcoach.backend.domain.user.repository.UserRepository;
-import com.drivingcoach.backend.global.filter.JwtAuthenticationFilter;
-import com.drivingcoach.backend.global.util.JwtUtil;
+import com.drivingcoach.backend.global.filter.JWTFilter;
+import com.drivingcoach.backend.global.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 /**
  * ✅ FilterBeanConfig
  *
  * 목적
- *  - {@link JwtAuthenticationFilter} 를 스프링 빈으로 등록합니다.
+ *  - {@link com.drivingcoach.backend.global.filter.JWTFilter} 를 스프링 빈으로 등록합니다.
  *  - 보안 설정({@link SecurityConfig})에서 addFilterBefore(...) 로 주입해 필터 체인에 연결합니다.
  *
  * 왜 필요한가?
@@ -28,12 +29,13 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class FilterBeanConfig {
 
-    private final JwtUtil jwtUtil;
+    private final JWTUtil jwtUtil;
     private final UserRepository userRepository;
+    private final UserDetailsService userDetailsService;
 
     /** JwtAuthenticationFilter 를 스프링 컨테이너에 등록 */
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil, userRepository);
+    public JWTFilter jwtAuthenticationFilter() {
+        return new JWTFilter(jwtUtil, userDetailsService);
     }
 }

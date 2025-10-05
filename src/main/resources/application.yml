@@ -65,11 +65,12 @@ springdoc:
 
 # -------- JWT(??? ???? ??) --------
 # secret ? "??? ? ?? ???"? Base64? ????? ????.
+# JWT 설정
 jwt:
-  secret: ${JWT_SECRET_BASE64:ZmFrZS1iYXNlNjQtc2VjcmV0LXBsZWFzZS1yZXBsYWNlLXRoaXM=} # ??/???
-  access-exp-ms: 3600000       # 1??
-  refresh-exp-ms: 1209600000   # 14?
-  issuer: driving-coach
+  secret-key:       zcR9P80KqqLmF5hT8dQ7VzXwJJgNZp3qrTy4FcRNm8L9H2zBxPVwP7L8RcNF5G2Q3xAW9cK6d
+  access-exp-time:  30000          # 30초 (밀리초)
+  refresh-exp-time: 7776000000     # 90일 (밀리초)
+
 
 # -------- AWS S3 --------
 aws:

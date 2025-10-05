@@ -1,5 +1,6 @@
 package com.drivingcoach.backend.domain.user.service;
 
+import com.drivingcoach.backend.domain.user.domain.CustomUserDetails;
 import com.drivingcoach.backend.domain.user.domain.dto.request.LoginRequest;
 import com.drivingcoach.backend.domain.user.domain.dto.request.RegisterRequest;
 import com.drivingcoach.backend.domain.user.domain.dto.response.LoginResponse;
@@ -7,9 +8,12 @@ import com.drivingcoach.backend.domain.user.domain.entity.User;
 import com.drivingcoach.backend.domain.user.repository.UserRepository;
 import com.drivingcoach.backend.global.exception.CustomException;
 import com.drivingcoach.backend.global.exception.ErrorCode;
-import com.drivingcoach.backend.global.util.JwtUtil;
+import com.drivingcoach.backend.global.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +26,9 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final JWTUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
+
 
     /** loginId 중복 여부 */
     public boolean isDuplicatedLoginId(String loginId) {
@@ -35,7 +41,7 @@ public class AuthService {
         if (userRepository.existsByLoginId(req.getLoginId())) {
             throw new CustomException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
-        if (req.getEmail() != null && userRepository.existsByEmail(req.getEmail())) {
+        if (req.getLoginId() != null && userRepository.existsByLoginId(req.getLoginId())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
 
@@ -45,7 +51,6 @@ public class AuthService {
                 .nickname(req.getNickname())
                 .gender(req.getGender())
                 .birthDate(req.getBirthDate())
-                .email(req.getEmail())
                 .role("ROLE_USER")
                 .active(true)
                 .build();
@@ -64,9 +69,16 @@ public class AuthService {
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
+        // 인증 시도
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getLoginId(), req.getPassword())
+        );
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getLoginId(), user.getRole());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getLoginId());
+        // 인증 성공 시 사용자 정보 가져오기
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String accessToken = jwtUtil.createAccessToken(userDetails);
+        String refreshToken = jwtUtil.createRefreshToken(userDetails);
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -75,17 +87,5 @@ public class AuthService {
                 .build();
     }
 
-    /** 리프레시 토큰 검증 → 새 액세스 토큰 발급 */
-    public String refreshAccessToken(String refreshToken) {
-        if (!jwtUtil.validateRefreshToken(refreshToken)) {
-            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
 
-        String loginId = jwtUtil.getLoginIdFromToken(refreshToken);
-        User user = userRepository.findByLoginId(loginId)
-                .filter(User::isActive)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        return jwtUtil.generateAccessToken(user.getId(), user.getLoginId(), user.getRole());
-    }
 }

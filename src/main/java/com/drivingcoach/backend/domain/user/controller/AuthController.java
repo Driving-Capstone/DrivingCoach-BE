@@ -51,12 +51,5 @@ public class AuthController {
         return ApiResponse.ok(token);
     }
 
-    @Operation(summary = "토큰 리프레시", description = "리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.")
-    @PostMapping("/refresh")
-    public ApiResponse<AccessTokenResponse> refresh(
-            @Valid @RequestBody RefreshTokenRequest request
-    ) {
-        String newAccessToken = authService.refreshAccessToken(request.getRefreshToken());
-        return ApiResponse.ok(new AccessTokenResponse(newAccessToken));
-    }
+    // reissue
 }

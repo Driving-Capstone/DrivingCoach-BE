@@ -31,18 +31,10 @@ public class UserService {
     public UserProfileResponse updateProfile(Long userId, UpdateUserProfileRequest request) {
         User user = getActiveUserOrThrow(userId);
 
-        // (선택) 이메일 중복 체크: null 아니고 변경하려는 값이 기존과 다를 때만 검사
-        if (request.getEmail() != null
-                && !request.getEmail().equals(user.getEmail())
-                && userRepository.existsByEmail(request.getEmail())) {
-            throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
         user.updateProfile(
                 request.getNickname(),
                 request.getGender(),
-                request.getBirthDate(),
-                request.getEmail()
+                request.getBirthDate()
         );
 
         // 변경감지로 flush, 혹은 명시적 save

@@ -1,10 +1,10 @@
 package com.drivingcoach.backend.domain.setting.controller;
 
 import com.drivingcoach.backend.domain.setting.domain.entity.Setting;
-import com.drivingcoach.backend.domain.setting.dto.request.UpdateVibrationRequest;
-import com.drivingcoach.backend.domain.setting.dto.request.UpdateVoiceRequest;
-import com.drivingcoach.backend.domain.setting.dto.request.UpsertSettingRequest;
-import com.drivingcoach.backend.domain.setting.dto.response.SettingResponse;
+import com.drivingcoach.backend.domain.setting.domain.dto.request.UpdateVibrationRequest;
+import com.drivingcoach.backend.domain.setting.domain.dto.request.UpdateVoiceRequest;
+import com.drivingcoach.backend.domain.setting.domain.dto.request.UpsertSettingRequest;
+import com.drivingcoach.backend.domain.setting.domain.dto.response.SettingResponse;
 import com.drivingcoach.backend.domain.setting.service.SettingService;
 import com.drivingcoach.backend.domain.user.domain.CustomUserDetails;
 import com.drivingcoach.backend.global.response.ApiResponse;

@@ -50,10 +50,6 @@ public class User {
     @Comment("생년월일")
     private LocalDate birthDate;
 
-    @Column(name = "email", length = 100)
-    @Comment("이메일")
-    private String email;
-
     @Column(name = "role", nullable = false, length = 20)
     @Comment("권한(ROLE_USER, ROLE_ADMIN 등)")
     @Builder.Default
@@ -76,11 +72,10 @@ public class User {
 
     /* ====== 비즈니스 메서드 ====== */
 
-    public void updateProfile(String nickname, Gender gender, LocalDate birthDate, String email) {
+    public void updateProfile(String nickname, Gender gender, LocalDate birthDate) {
         if (nickname != null && !nickname.isBlank()) this.nickname = nickname;
         if (gender != null) this.gender = gender;
         if (birthDate != null) this.birthDate = birthDate;
-        if (email != null && !email.isBlank()) this.email = email;
     }
 
     public void changePassword(String encodedNewPassword) {
