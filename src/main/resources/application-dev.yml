@@ -1,0 +1,153 @@
+# ===============================================
+# ? application.yml  (Spring Boot 3.x, Java 17)
+# -----------------------------------------------
+# - ???? ?? ??? ?????.
+# - ?? ?? ???? 'local' ???.
+# - ?? ?? ??? ???? SPRING_PROFILES_ACTIVE=prod ? ?????.
+# ===============================================
+
+spring:
+  application:
+    name: driving-coach-backend
+
+  profiles:
+    active: local   # ??? local. CI/????? prod ? ?????
+
+  # -------- JSON/?? ??(??) --------
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false  # ISO-8601 ???? ??
+    default-property-inclusion: non_null
+
+  # -------- Multipart ??? ?? --------
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 512MB
+      max-request-size: 512MB
+
+  # -------- JPA/Hibernate ?? --------
+  jpa:
+    open-in-view: false     # ??: false (???? ? LAZY ?? ??)
+    properties:
+      hibernate:
+        format_sql: true    # ?? ???
+        jdbc:
+          time_zone: UTC    # DB ??? ???(??DB ??? ?? ??)
+    database-platform: org.hibernate.dialect.MySQLDialect # ???(????? ???)
+
+# -------- ?? ??/?? ??? --------
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# -------- ??/???? --------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+# -------- Swagger / OpenAPI(springdoc) --------
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operationsSorter: method
+    tagsSorter: alpha
+    display-request-duration: true
+
+# -------- JWT(??? ???? ??) --------
+# secret ? "??? ? ?? ???"? Base64? ????? ????.
+# JWT 설정
+jwt:
+  secret-key:       zcR9P80KqqLmF5hT8dQ7VzXwJJgNZp3qrTy4FcRNm8L9H2zBxPVwP7L8RcNF5G2Q3xAW9cK6d
+  access-exp-time:  30000          # 30초 (밀리초)
+  refresh-exp-time: 7776000000     # 90일 (밀리초)
+
+
+# -------- AWS S3 --------
+aws:
+  s3:
+    region: ${AWS_REGION:ap-northeast-2}
+    bucket: ${AWS_S3_BUCKET:your-drivcoach-bucket}
+    endpoint: ${AWS_S3_ENDPOINT:}   # ??? ????? ?? ?? ??(???? ??)
+
+# -------- ?? --------
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: DEBUG          # SQL ??
+    org.hibernate.orm.jdbc.bind: TRACE # ??? ????
+    com.drivingcoach: DEBUG
+
+# ======================================================
+# ? Local ???: ?? ?? (H2 + ddl-auto:update)
+# ======================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:h2:mem:drivingcoach;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update    # ?? ?? ??. ????? ?? update/create ?? ??
+    show-sql: true
+
+# H2 ?? ?? ??? ?? ??
+# spring:
+#   h2:
+#     console:
+#       enabled: true
+#       path: /h2-console
+
+# ======================================================
+# ? Prod ???: ?? (MySQL + ddl-auto:validate)
+# - ????/??? ???? ???? ?? ??
+# ======================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://your-rds-host:3306/drivingcoach?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # ????? ??? ?? ?? (Flyway/Liquibase ??)
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        generate_statistics: false
+
+server:
+  forward-headers-strategy: native  # ???/????? X-Forwarded-* ??
+  tomcat:
+    max-swallow-size: 512MB
+
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: WARN
+    com.drivingcoach: INFO
