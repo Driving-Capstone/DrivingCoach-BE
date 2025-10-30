@@ -12,7 +12,7 @@
  * - jjwt 0.12.x API에 맞춰 JwtUtil을 구현했습니다(서명/파서 API가 0.11.x와 다릅니다).
  * - AWS SDK v2는 BOM을 통해 버전 정합성을 맞춥니다.
  */
-
+// gradlew 파일 추가
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.3'    // 부트 버전(자바 17 이상 필요)
