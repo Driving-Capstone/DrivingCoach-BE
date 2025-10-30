@@ -131,6 +131,12 @@ spring:
           time_zone: UTC
         generate_statistics: false
 
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://grantip-mysql.cx4aoucu6dqm.ap-northeast-2.rds.amazonaws.com:3306/drivingcoach
+    username: admin
+    password: "aqaq2114456178!"
+
 server:
   forward-headers-strategy: native  # ???/????? X-Forwarded-* ??
   tomcat:
