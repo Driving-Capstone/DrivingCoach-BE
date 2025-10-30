@@ -20,8 +20,8 @@ build/
 gradle-app.setting
 
 # Gradle Wrapper OS 권한 파일 (자동 생성)
-gradlew
-gradlew.bat
+#gradlew
+#gradlew.bat
 
 # ---- Maven (혹시 혼용 시) ----
 target/
