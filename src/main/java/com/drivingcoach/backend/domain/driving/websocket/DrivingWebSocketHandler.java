@@ -49,6 +49,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
 
     private static final String S3_PREFIX = "driving";  // s3 키 prefix
+    //
 
     /* ===================== Connection Lifecycle ===================== */
 
