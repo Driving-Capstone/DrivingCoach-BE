@@ -1,19 +1,16 @@
 package com.drivingcoach.backend.domain.driving.websocket;
 
 import com.drivingcoach.backend.global.util.S3Uploader;
-import com.drivingcoach.backend.global.util.JWTUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import java.io.IOException;
-import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -22,19 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 주행 데이터 전송을 위한 WebSocket 핸들러
- *
- * - 엔드포인트: /driving
- * - 프로토콜(제안):
- *   1) 텍스트(START): { "type":"START", "recordId": "optional-uuid" }
- *      → 서버가 recordId 없으면 생성하여 STARTED 로 회신
- *   2) 바이너리(CHUNK): zip/mp4 등 청크를 바이너리로 전송
- *      → 서버는 S3에 저장 후 { "type":"CHUNK_STORED", "key":"s3key", "size":12345 } 회신
- *   3) 텍스트(END): { "type":"END" } → { "type":"ENDED", "recordId":"...", "chunks":N } 회신
- *   4) 텍스트(PING): { "type":"PING" } → { "type":"PONG" } 회신
- *
- * - 인증:
- *   - 쿼리 파라미터로 token(=JWT AccessToken) 전달 가능: ws://.../driving?token=Bearer%20xxx
- *   - 없으면 비로그인 세션으로 처리(추후 Security/HandshakeInterceptor로 대체 가능)
+ * - 엔드포인트: /ws/driving
  */
 @Slf4j
 @Component
@@ -43,21 +28,18 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final S3Uploader s3Uploader;
-    private final JWTUtil jwtUtil;
 
     /** 세션ID → 상태 */
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
 
-    private static final String S3_PREFIX = "driving";  // s3 키 prefix
-    //
-
-    /* ===================== Connection Lifecycle ===================== */
+    private static final String S3_PREFIX = "driving";
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         String sessionId = session.getId();
-        AuthInfo auth = extractAuth(session);
+        AuthInfo auth = resolveAuthFromAttributes(session);
         sessions.put(sessionId, new SessionState(auth, null, 0, Instant.now()));
+
         log.info("[WS] connected: sid={}, userLoginId={}, uid={}", sessionId, auth.loginId, auth.userId);
         safeSendText(session, Json.obj("type", "CONNECTED", "sessionId", sessionId));
     }
@@ -70,11 +52,9 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         SessionState st = sessions.remove(session.getId());
-        log.info("[WS] closed: sid={}, recordId={}, chunks={}, status={}", session.getId(),
-                st != null ? st.recordId : null, st != null ? st.chunkCount : 0, status);
+        log.info("[WS] closed: sid={}, recordId={}, chunks={}, status={}",
+                session.getId(), st != null ? st.recordId : null, st != null ? st.chunkCount : 0, status);
     }
-
-    /* ===================== Message Handling ===================== */
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
@@ -103,7 +83,9 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
         }
 
         try {
-            byte[] bytes = message.getPayload().array();
+            byte[] bytes = new byte[message.getPayload().remaining()];
+            message.getPayload().duplicate().get(bytes);
+
             String key = String.format("%s/%s/%d.bin", S3_PREFIX, st.recordId, System.currentTimeMillis());
             s3Uploader.uploadBytes(bytes, key, "application/octet-stream");
 
@@ -144,7 +126,6 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
         }
         safeSendText(session, Json.obj("type", "ENDED", "recordId", st.recordId, "chunks", st.chunkCount));
         log.info("[WS] END: sid={}, recordId={}, chunks={}", session.getId(), st.recordId, st.chunkCount);
-        // 필요 시 여기서 DB에 업로드 메타 정보 집계/저장 로직 추가 (DrivingRecord + S3 key list 등)
     }
 
     /* ===================== Helpers ===================== */
@@ -155,37 +136,16 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     }
 
     private void safeSendText(WebSocketSession session, String json) {
-        try {
-            if (session.isOpen()) session.sendMessage(new TextMessage(json));
-        } catch (IOException e) {
-            log.warn("[WS] send failed: sid={}, err={}", session.getId(), e.getMessage());
-        }
+        try { if (session.isOpen()) session.sendMessage(new TextMessage(json)); }
+        catch (IOException e) { log.warn("[WS] send failed: sid={}, err={}", session.getId(), e.getMessage()); }
     }
 
-    private AuthInfo extractAuth(WebSocketSession session) {
-        try {
-            URI uri = session.getUri();
-            if (uri == null) return AuthInfo.anonymous();
-
-            String q = uri.getQuery(); // e.g., token=Bearer%20xxx
-            if (!StringUtils.hasText(q)) return AuthInfo.anonymous();
-
-            for (String kv : q.split("&")) {
-                String[] arr = kv.split("=", 2);
-                if (arr.length == 2 && arr[0].equals("token")) {
-                    String token = java.net.URLDecoder.decode(arr[1], java.nio.charset.StandardCharsets.UTF_8);
-                    if (token.startsWith("Bearer ")) token = token.substring(7);
-                    if (jwtUtil.isValid(token)) {
-                        String loginId = jwtUtil.getLoginId(token);
-                        Long userId = Long.parseLong(jwtUtil.getUserId(token));
-                        return new AuthInfo(userId, loginId);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.warn("[WS] auth extract failed: {}", e.getMessage());
-        }
-        return AuthInfo.anonymous();
+    private AuthInfo resolveAuthFromAttributes(WebSocketSession session) {
+        Object loginId = session.getAttributes().get("authLoginId");
+        Object userId  = session.getAttributes().get("authUserId");
+        String lid = loginId instanceof String ? (String) loginId : "anonymous";
+        Long uid = (userId instanceof Long) ? (Long) userId : null;
+        return new AuthInfo(uid, lid);
     }
 
     /* ===================== Inner Types ===================== */
@@ -194,10 +154,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     private static class AuthInfo {
         Long userId;
         String loginId;
-
-        static AuthInfo anonymous() {
-            return new AuthInfo(null, "anonymous");
-        }
+        static AuthInfo anonymous() { return new AuthInfo(null, "anonymous"); }
     }
 
     private static class SessionState {
@@ -212,13 +169,10 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
             this.chunkCount = chunkCount;
             this.connectedAt = connectedAt;
         }
-
-        void incrementChunk() {
-            this.chunkCount++;
-        }
+        void incrementChunk() { this.chunkCount++; }
     }
 
-    /** 간단 JSON 생성 유틸 (빌더 대용) */
+    /** 간단 JSON 생성 유틸 */
     private static final class Json {
         static String obj(Object... kv) {
             if (kv.length % 2 != 0) throw new IllegalArgumentException("Key/Value must be pairs");
@@ -234,7 +188,6 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
             sb.append('}');
             return sb.toString();
         }
-
         private static String escape(String s) {
             return s.replace("\\", "\\\\").replace("\"", "\\\"");
         }

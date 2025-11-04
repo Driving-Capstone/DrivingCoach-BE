@@ -54,7 +54,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()  // ✅ WebSocket 핸드셰이크 허용
-                        
+
                 )
                 .cors(c -> {}) // CORS 기본 허용(원하면 config 추가)
                 .headers(h -> h.frameOptions(f -> f.disable()))
