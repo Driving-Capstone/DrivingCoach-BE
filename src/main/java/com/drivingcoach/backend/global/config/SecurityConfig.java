@@ -49,7 +49,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 // csrf disable
-                .csrf(auth -> auth.disable())
+                .csrf(csrf -> csrf.disable()) // 또는 최소한 /driving에 대해서는 CSRF 무시
+                //.csrf(csrf -> csrf.ignoringRequestMatchers("/driving/**"))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()  // ✅ WebSocket 핸드셰이크 허용
+                        .anyRequest().authenticated()
+                )
+                .cors(c -> {}) // CORS 기본 허용(원하면 config 추가)
+                .headers(h -> h.frameOptions(f -> f.disable()))
+                ////////////////////////////////////////////////////////////////////////////
 
                 // form 로그인 방식 disable
                 .formLogin(auth -> auth.disable())

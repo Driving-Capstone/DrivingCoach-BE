@@ -34,7 +34,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(drivingWebSocketHandler, "/driving")
+        registry.addHandler(drivingWebSocketHandler, "/ws/driving")
                 .addInterceptors(loggingInterceptor())
                 .setAllowedOriginPatterns("*"); // 필요 시 프론트 도메인으로 제한
     }
