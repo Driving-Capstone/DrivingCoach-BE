@@ -45,7 +45,7 @@ public class S3Uploader {
                     .bucket(bucket)
                     .key(key)
                     .contentType(contentType)
-                    .acl(ObjectCannedACL.PRIVATE) // 공개 필요 시 PUBLIC_READ 로 조정
+                    .acl(ObjectCannedACL.PUBLIC_READ) // 공개 필요 시 PUBLIC_READ 로 조정
                     .build();
 
             s3Client.putObject(req, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
