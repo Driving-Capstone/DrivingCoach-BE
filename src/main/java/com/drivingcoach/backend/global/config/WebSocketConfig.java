@@ -12,6 +12,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean; // 1. import 추가
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 import java.net.URI;
@@ -36,6 +37,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Bean
     public HandshakeInterceptor loggingInterceptor() {
+        // ... (기존 코드 생략) ...
         return new HttpSessionHandshakeInterceptor() {
             @Override
             public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -48,5 +50,24 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 return true;
             }
         };
+    }
+
+    /**
+     * 2. 웹소켓 버퍼 크기 설정을 위한 빈 추가
+     * 4-5MB를 원하셨으므로 5MB (5 * 1024 * 1024 바이트)로 설정합니다.
+     */
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+
+        final int FIVE_MB = 5 * 1024 * 1024;
+
+        // 텍스트 메시지 버퍼 크기 5MB로 설정
+        container.setMaxTextMessageBufferSize(FIVE_MB);
+
+        // 바이너리 메시지 버퍼 크기 5MB로 설정
+        container.setMaxBinaryMessageBufferSize(FIVE_MB);
+
+        return container;
     }
 }

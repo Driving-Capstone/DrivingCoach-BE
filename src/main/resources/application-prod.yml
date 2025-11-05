@@ -7,6 +7,30 @@
 # ===============================================
 
 spring:
+  # -------- 관리/헬스 --------
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info
+        # (선택) base-path를 바꿨다면 /actuator 대신 여기에 맞춰 보안/모니터링 경로도 수정
+        # base-path: /actuator
+    endpoint:
+      health:
+        show-details: never
+        probes:
+          enabled: true   # /actuator/health/liveness, /readiness 노출
+
+  # -------- 서버 --------
+  server:
+    port: 8080
+    error:
+      include-message: always
+      include-binding-errors: always
+    tomcat:
+      # 업로드(HTTP) 바디 제한 완화 (WS에는 직접 영향 없지만 일반 업로드에 도움)
+      max-swallow-size: 512MB
+
   application:
     name: driving-coach-backend
 

@@ -66,6 +66,7 @@ public class SecurityConfig {
                 // http basic 인증 방식 disable
                 .httpBasic(auth -> auth.disable())
 
+
                 // 인가 처리
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("v3/api-docs/**",
@@ -73,12 +74,14 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/actuator/health",
+                                "/actuator/**",
                                 "api/auth/login", "api/auth/register", "api/auth/reissue",
                                 "api/auth/logout",
                                 "/email/send", "/email/verify",
                                 "/api/scholarships",
                                 "/api/scholarships/**",
+                                "/webjars/**",
+                                "/ws/**",
                                 "/api/regions/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/auth/logout").permitAll()       // 프리플라이트 허용
