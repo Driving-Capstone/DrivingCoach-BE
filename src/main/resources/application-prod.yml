@@ -21,6 +21,7 @@ spring:
         probes:
           enabled: true   # /actuator/health/liveness, /readiness 노출
 
+
   # -------- 서버 --------
   server:
     port: 8080
@@ -39,6 +40,8 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false  # ISO-8601 ???? ??
     default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+
 
   # -------- Multipart ??? ?? --------
   servlet:
