@@ -2,6 +2,7 @@ package com.drivingcoach.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * ✅ DrivingCoachApplication
@@ -17,6 +18,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *  - 보안/웹소켓/S3 등 공통 설정은 global.config 패키지의 각 설정 클래스를 통해 구성됩니다.
  *  - 실행 프로필/환경 변수는 src/main/resources/application.yml 로 관리합니다.
  */
+@EnableAsync // 2. 비동기 활성화 애노테이션 추가
 @SpringBootApplication
 public class DrivingcoachApplication {
 

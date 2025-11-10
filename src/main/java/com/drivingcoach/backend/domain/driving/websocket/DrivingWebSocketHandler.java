@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
+import com.drivingcoach.backend.domain.driving.service.AIAnalysisService; // 1. AI 서비스 임포트
 
 import java.io.IOException;
 import java.time.Instant;
@@ -28,6 +29,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final S3Uploader s3Uploader;
+    private final AIAnalysisService aiAnalysisService; // 2. AI 서비스 주입
 
     /** 세션ID → 상태 */
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -96,6 +98,9 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
                     "size", bytes.length,
                     "chunkIndex", st.chunkCount
             ));
+
+            aiAnalysisService.triggerAIAnalysis(key);
+
         } catch (Exception e) {
             log.error("[WS] binary upload failed: sid={}, err={}", session.getId(), e.getMessage(), e);
             safeSendText(session, Json.obj("type", "ERROR", "message", "Upload failed"));
