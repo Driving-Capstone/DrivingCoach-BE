@@ -103,6 +103,10 @@ aws:
 ai:
   server:
     url: "https://unsecurely-burlier-irwin.ngrok-free.dev" # AI 서버의 Ngrok URL 또는 고정 IP:8000 주소
+    
+backend:
+  server:
+    url: "http://15.165.244.204:8080" # 예: EC2의 고정 IP 또는 도메인 주소
 
 # -------- ?? --------
 logging:

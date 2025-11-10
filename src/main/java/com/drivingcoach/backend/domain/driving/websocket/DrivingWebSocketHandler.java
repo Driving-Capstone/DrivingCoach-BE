@@ -1,5 +1,6 @@
 package com.drivingcoach.backend.domain.driving.websocket;
 
+import com.drivingcoach.backend.domain.driving.service.WebSocketSessionService;
 import com.drivingcoach.backend.global.util.S3Uploader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +31,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final S3Uploader s3Uploader;
     private final AIAnalysisService aiAnalysisService; // 2. AI 서비스 주입
+    private final WebSocketSessionService sessionService; // 2. 주입
 
     /** 세션ID → 상태 */
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -54,6 +56,10 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         SessionState st = sessions.remove(session.getId());
+
+        // 3. (추가) 세션 맵에서 제거
+        sessionService.removeSession(st != null ? st.recordId : null);
+
         log.info("[WS] closed: sid={}, recordId={}, chunks={}, status={}",
                 session.getId(), st != null ? st.recordId : null, st != null ? st.chunkCount : 0, status);
     }
@@ -99,7 +105,8 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
                     "chunkIndex", st.chunkCount
             ));
 
-            aiAnalysisService.triggerAIAnalysis(key);
+            // 4. (수정!) AI 분석 요청 시 recordId도 함께 전달
+            aiAnalysisService.triggerAIAnalysis(key, st.recordId);
 
         } catch (Exception e) {
             log.error("[WS] binary upload failed: sid={}, err={}", session.getId(), e.getMessage(), e);
@@ -118,6 +125,9 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
         String recordId = optText(payload, "recordId").orElse(UUID.randomUUID().toString());
         st.recordId = recordId;
         st.chunkCount = 0;
+
+        // 5. (추가!) 세션 맵에 등록
+        sessionService.registerSession(recordId, session);
 
         safeSendText(session, Json.obj("type", "STARTED", "recordId", recordId));
         log.info("[WS] START: sid={}, recordId={}, user={}", session.getId(), recordId, st.auth.loginId);
