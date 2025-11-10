@@ -60,6 +60,6 @@ public class AIAnalysisService {
     @Setter
     @RequiredArgsConstructor
     private static class S3AnalysisRequestDto {
-        private final String s3_key;
+        private final String s3_file_key;
     }
 }

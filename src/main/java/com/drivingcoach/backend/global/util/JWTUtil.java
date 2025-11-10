@@ -39,7 +39,7 @@ public class JWTUtil {
      * @return
      */
     public String createAccessToken(CustomUserDetails customUserDetails) {
-        return createToken(ACCESS_CATEGORY, customUserDetails.getLoginId(), customUserDetails.getRole(), ACCESS_TOKEN_EXPIRATION);
+        return createToken(ACCESS_CATEGORY, customUserDetails.getLoginId(), customUserDetails.getRole(),customUserDetails.getUserId(), ACCESS_TOKEN_EXPIRATION);
     }
 
     /**
@@ -49,7 +49,7 @@ public class JWTUtil {
      * @return
      */
     public String createRefreshToken(CustomUserDetails customUserDetails) {
-        return createToken(REFRESH_CATEGORY, customUserDetails.getLoginId(), customUserDetails.getRole(), REFRESH_TOKEN_EXPIRATION);
+        return createToken(REFRESH_CATEGORY, customUserDetails.getLoginId(), customUserDetails.getRole(),customUserDetails.getUserId(), REFRESH_TOKEN_EXPIRATION);
     }
 
     /**
@@ -58,15 +58,17 @@ public class JWTUtil {
      * @param category          토큰 카테고리
      * @param identifier        식별자
      * @param role              역할
+     * @param userId
      * @param expiredMs         만료 시간
      * @return 생성된 JWT 토큰
      */
-    private String createToken(String category, String identifier, String role, Long expiredMs){
+    private String createToken(String category, String identifier, String role, Long userId, Long expiredMs){
         return Jwts.builder()
                 .subject(identifier)
                 .claim("category", category)
                 .claim("role", "ROLE_"+role)
                 .claim("LoginId", identifier)
+                .claim("userId", userId)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(getSignKey())
