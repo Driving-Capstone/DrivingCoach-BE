@@ -85,7 +85,9 @@ tmp/
 .env
 .env.*
 *.local.yml
-application-local.yml
+application.yml
+application-dev.yml
+application-prod.yml
 
 # ---- Docker ----
 /docker/**/data/
