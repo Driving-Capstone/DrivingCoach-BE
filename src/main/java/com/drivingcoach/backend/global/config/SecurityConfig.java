@@ -83,6 +83,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/ws/**",
                                 "/api/ai-callback/**",
+                                "/api/test/**",
                                 "/api/regions/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/auth/logout").permitAll()       // 프리플라이트 허용

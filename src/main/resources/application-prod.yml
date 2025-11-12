@@ -40,7 +40,7 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false  # ISO-8601 ???? ??
     default-property-inclusion: non_null
-    property-naming-strategy: SNAKE_CASE
+    #property-naming-strategy: SNAKE_CASE
 
 
   # -------- Multipart ??? ?? --------
