@@ -23,12 +23,10 @@ public class AICallbackController {
             @PathVariable String recordId,
             @RequestBody AIAnalysisResultDto resultDto
     ) {
-        // AI가 s3_file_key와 recordId를 둘 다 보내주므로 로그 강화
-        log.info("[AI-Callback] 결과 도착: recordId={}, s3_key={}", recordId, resultDto.getS3FileKey());
+        // (수정!) DTO 객체 자체를 로그에 넘겨서 전체 JSON을 확인
+        log.info("[AI-Callback] 결과 도착: recordId={}, data={}", recordId, resultDto);
 
         // WebSocket 세션 관리자에게 AI 결과를 전달
         sessionService.sendResultToSession(recordId, resultDto);
-
-        // (AI 서버에게는 빨리 200 OK를 응답하고 종료)
     }
 }
