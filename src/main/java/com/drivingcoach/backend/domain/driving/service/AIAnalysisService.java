@@ -65,6 +65,6 @@ public class AIAnalysisService {
         private final String callbackUrl; // AI의 Pydantic 모델과 필드명 일치
         // 3. (추가!) AI가 요구하는 chunkIndex 필드
         private final int chunkIndex;
-        
+
     }
 }

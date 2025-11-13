@@ -27,7 +27,7 @@ public class TestTriggerController {
         String testS3Key = "driving/test-video.bin";
 
         // 2. AI 분석 서비스 호출 (웹소켓 핸들러 대신)
-        aiAnalysisService.triggerAIAnalysis(testS3Key, recordId);
+        aiAnalysisService.triggerAIAnalysis(testS3Key, recordId, 1);
 
         // 3. 즉시 응답 반환
         return "OK. AI Job Triggered for recordId=" + recordId + ". Check Backend Logs for [AI-Callback].";
