@@ -29,15 +29,15 @@ public class AIAnalysisService {
      * AI 서버에 비동기 분석을 "요청(Fire)"
      */
     @Async
-    public void triggerAIAnalysis(String s3Key, String recordId) { // recordId 파라미터 추가
+    public void triggerAIAnalysis(String s3Key, String recordId, int chunkIndex) { // recordId 파라미터 추가
 
         String url = aiServerUrl + "/analyze_s3_video_async"; // 1. AI 엔드포인트 변경
 
         // 2. (중요!) AI에 보낼 콜백 URL 생성 (recordId 포함)
         String callbackUrl = String.format("%s/api/ai-callback/%s", backendServerUrl, recordId);
 
-        // 3. AI에 보낼 DTO 객체 생성 (s3_key, callback_url)
-        AIAnalysisRequestDto requestDto = new AIAnalysisRequestDto(s3Key, callbackUrl);
+        // 2. (수정!) DTO 생성자에 chunkIndex 전달
+        AIAnalysisRequestDto requestDto = new AIAnalysisRequestDto(s3Key, callbackUrl, chunkIndex);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -63,5 +63,8 @@ public class AIAnalysisService {
     private static class AIAnalysisRequestDto {
         private final String s3FileKey;
         private final String callbackUrl; // AI의 Pydantic 모델과 필드명 일치
+        // 3. (추가!) AI가 요구하는 chunkIndex 필드
+        private final int chunkIndex;
+        
     }
 }

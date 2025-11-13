@@ -106,7 +106,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
             ));
 
             // 4. (수정!) AI 분석 요청 시 recordId도 함께 전달
-            aiAnalysisService.triggerAIAnalysis(key, st.recordId);
+            aiAnalysisService.triggerAIAnalysis(key, st.recordId, st.chunkCount); // <-- st.chunkCount 추가
 
         } catch (Exception e) {
             log.error("[WS] binary upload failed: sid={}, err={}", session.getId(), e.getMessage(), e);
