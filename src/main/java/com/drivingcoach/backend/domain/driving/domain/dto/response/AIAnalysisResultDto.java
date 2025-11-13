@@ -14,6 +14,7 @@ public class AIAnalysisResultDto {
     private List<FrameDetectionOutputDto> resultsPerFrame; // AI가 camelCase로 보냄
 
     private String status;
+    private int chunkIndex;
 
     @Data
     public static class FrameDetectionOutputDto {
