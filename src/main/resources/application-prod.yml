@@ -107,6 +107,7 @@ ai:
   server:
     url: "https://unsecurely-burlier-irwin.ngrok-free.dev" # AI 서버의 Ngrok URL 또는 고정 IP:8000 주소
     # 준서 https://092a2ce8cb44.ngrok-free.app
+    # 지호 https://unsecurely-burlier-irwin.ngrok-free.dev
 
 backend:
   server:

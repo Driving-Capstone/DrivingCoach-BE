@@ -31,7 +31,7 @@ public class AIAnalysisService {
     @Async
     public void triggerAIAnalysis(String s3Key, String recordId) { // recordId 파라미터 추가
 
-        String url = aiServerUrl + "/analyze_s3_audio_async"; // 1. AI 엔드포인트 변경
+        String url = aiServerUrl + "/analyze_s3_video_async"; // 1. AI 엔드포인트 변경
 
         // 2. (중요!) AI에 보낼 콜백 URL 생성 (recordId 포함)
         String callbackUrl = String.format("%s/api/ai-callback/%s", backendServerUrl, recordId);
