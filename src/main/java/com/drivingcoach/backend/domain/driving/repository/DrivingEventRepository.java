@@ -131,4 +131,9 @@ public interface DrivingEventRepository extends JpaRepository<DrivingEvent, Long
             group by e.severity
            """)
     List<Object[]> countBySeverity(@Param("recordId") Long recordId);
+    /**
+     * (추가) 특정 유저의 모든 주행 기록에서 발생한 이벤트 총 개수
+     */
+    @Query("select count(e) from DrivingEvent e join e.drivingRecord dr where dr.user.id = :userId")
+    long countAllEventsByUserId(@Param("userId") Long userId);
 }

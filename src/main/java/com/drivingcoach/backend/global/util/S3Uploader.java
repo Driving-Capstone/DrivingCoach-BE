@@ -8,6 +8,9 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +29,37 @@ public class S3Uploader {
 
     @Qualifier("s3BucketName")
     private final String bucket;
+
+    /** (추가) 특정 폴더(prefix) 내의 파일 목록 조회 */
+    public List<String> listKeys(String prefix) {
+        try {
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .build();
+            return s3Client.listObjectsV2(request).contents().stream()
+                    .map(S3Object::key)
+                    .sorted() // 타임스탬프 순 정렬 보장
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("[S3] List keys failed: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    /** (추가) 파일 다운로드 */
+    public void download(String key, File destination) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+            s3Client.getObject(request, ResponseTransformer.toFile(destination));
+        } catch (Exception e) {
+            log.error("[S3] Download failed: {}", key, e);
+            throw new RuntimeException("S3 다운로드 실패");
+        }
+    }
 
     /* ========================= Upload ========================= */
 
