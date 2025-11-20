@@ -3,36 +3,46 @@ package com.drivingcoach.backend.domain.driving.domain.dto.response;
 import com.drivingcoach.backend.domain.driving.domain.entity.DrivingRecord;
 import lombok.*;
 
+import java.time.format.DateTimeFormatter;
+
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class HistoryResponse {
-    private Long drivingId;
-    private int startYear;
-    private int startMonth;
-    private int startDay;
-    private String startTime;
-    private int drivingTime;       // 명세서 예시: 60
-    private String drivingScoreMessage;
-    private int eventTime;         // 이벤트 발생 횟수
+    private Long id;               // drivingId (프론트 요청: id)
+    private String date;           // "2024-01-15 14:30" 포맷
+    private String duration;       // "45분" 포맷
+    private String distance;       // (현재 DB에 거리 정보 없음. 추후 추가 필요하거나 0km 처리)
+    private int events;            // 이벤트 개수
+    private String status;         // "안전", "주의", "위험"
 
-    // Entity -> DTO 변환 메서드
     public static HistoryResponse from(DrivingRecord record) {
-        // 점수에 따른 메시지 로직 (예시)
-        String msg = "안전";
-        if (record.getScore() != null && record.getScore() < 70) msg = "주의";
-        else if (record.getScore() != null && record.getScore() < 40) msg = "위험";
+        // 날짜 포맷팅
+        String dateStr = record.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+        // 주행 시간 포맷팅 (초 -> 분)
+        int minutes = record.getTotalTime() / 60;
+        String durationStr = minutes + "분";
+
+        // 상태 로직 (점수 기준 예시)
+        String statusStr = "보통";
+        if (record.getScore() != null) {
+            if (record.getScore() >= 80) statusStr = "안전";
+            else if (record.getScore() >= 95) statusStr = "매우 안전";
+            else if (record.getScore() < 60) statusStr = "주의";
+        }
+
+        // 이벤트 개수
+        int eventCount = (record.getEvents() != null) ? record.getEvents().size() : 0;
 
         return HistoryResponse.builder()
-                .drivingId(record.getId())
-                .startYear(record.getStartTime().getYear())
-                .startMonth(record.getStartTime().getMonthValue())
-                .startDay(record.getStartTime().getDayOfMonth())
-                .startTime(String.format("%02d:%02d", record.getStartTime().getHour(), record.getStartTime().getMinute()))
-                .drivingTime(record.getTotalTime() / 60) // 초 -> 분 변환 예시
-                .drivingScoreMessage(msg)
-                .eventTime(record.getEvents() != null ? record.getEvents().size() : 0)
+                .id(record.getId())
+                .date(dateStr)
+                .duration(durationStr)
+                .distance("0km") // TODO: 거리 정보 수집 시 수정
+                .events(eventCount)
+                .status(statusStr)
                 .build();
     }
 }

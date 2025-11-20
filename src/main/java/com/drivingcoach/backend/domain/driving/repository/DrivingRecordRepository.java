@@ -207,4 +207,7 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord, Lo
     long countEventsByUserIdAndPeriod(@Param("userId") Long userId,
                                       @Param("from") LocalDateTime from,
                                       @Param("to") LocalDateTime to);
+
+    /** 단순 페이징 조회 (정렬은 Pageable에 포함됨) */
+    Page<DrivingRecord> findAllByUserId(Long userId, Pageable pageable);
 }
