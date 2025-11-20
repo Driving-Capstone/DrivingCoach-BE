@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import com.drivingcoach.backend.domain.driving.service.AIAnalysisService; // 1. AI 서비스 임포트
+import com.drivingcoach.backend.domain.driving.service.DrivingService;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -32,6 +33,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     private final S3Uploader s3Uploader;
     private final AIAnalysisService aiAnalysisService; // 2. AI 서비스 주입
     private final WebSocketSessionService sessionService; // 2. 주입
+    private final DrivingService drivingService;
 
     /** 세션ID → 상태 */
     private final Map<String, SessionState> sessions = new ConcurrentHashMap<>();
@@ -86,7 +88,7 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         SessionState st = sessions.get(session.getId());
         if (st == null || st.recordId == null) {
-            safeSendText(session, Json.obj("type", "ERROR", "message", "Session not started. Send START first."));
+            // ... error handling ...
             return;
         }
 
@@ -94,6 +96,8 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
             byte[] bytes = new byte[message.getPayload().remaining()];
             message.getPayload().duplicate().get(bytes);
 
+            // (중요) 이제 recordId가 실제 DB ID(Long)이므로, 이를 기반으로 S3 키 생성
+            // 예: driving/105/1723001.bin
             String key = String.format("%s/%s/%d.bin", S3_PREFIX, st.recordId, System.currentTimeMillis());
             s3Uploader.uploadBytes(bytes, key, "application/octet-stream");
 
@@ -105,32 +109,45 @@ public class DrivingWebSocketHandler extends AbstractWebSocketHandler {
                     "chunkIndex", st.chunkCount
             ));
 
-            // 4. (수정!) AI 분석 요청 시 recordId도 함께 전달
-            aiAnalysisService.triggerAIAnalysis(key, st.recordId, st.chunkCount); // <-- st.chunkCount 추가
+            // AI 분석 요청 (chunkCount 포함)
+            aiAnalysisService.triggerAIAnalysis(key, st.recordId, st.chunkCount);
 
         } catch (Exception e) {
-            log.error("[WS] binary upload failed: sid={}, err={}", session.getId(), e.getMessage(), e);
-            safeSendText(session, Json.obj("type", "ERROR", "message", "Upload failed"));
+            log.error("[WS] upload failed", e);
         }
     }
 
     /* ===================== Handlers ===================== */
 
+    // (3) ★ 핵심 수정 부분: onStart ★
     private void onStart(WebSocketSession session, JsonNode payload) {
         SessionState st = sessions.get(session.getId());
         if (st == null) {
             safeSendText(session, Json.obj("type", "ERROR", "message", "Invalid session"));
             return;
         }
-        String recordId = optText(payload, "recordId").orElse(UUID.randomUUID().toString());
-        st.recordId = recordId;
+
+        // 로그인하지 않은 사용자 체크
+        if (st.auth.userId == null) {
+            safeSendText(session, Json.obj("type", "ERROR", "message", "Login required for recording"));
+            return;
+        }
+
+        // [수정] 가짜 ID 대신 DB에 실제로 저장하고 진짜 ID(Long)를 받음
+        Long dbRecordId = drivingService.startDriving(st.auth.userId, null, null);
+
+        // 세션 상태에 진짜 ID 저장 (String으로 변환하여 호환성 유지)
+        String strRecordId = String.valueOf(dbRecordId);
+        st.recordId = strRecordId;
         st.chunkCount = 0;
 
-        // 5. (추가!) 세션 맵에 등록
-        sessionService.registerSession(recordId, session);
+        // 세션 매니저에 등록 (AI 콜백 받을 준비)
+        sessionService.registerSession(strRecordId, session);
 
-        safeSendText(session, Json.obj("type", "STARTED", "recordId", recordId));
-        log.info("[WS] START: sid={}, recordId={}, user={}", session.getId(), recordId, st.auth.loginId);
+        // [중요] 프론트엔드에게 진짜 DB ID를 응답 (프론트는 종료 시 이 ID를 사용)
+        safeSendText(session, Json.obj("type", "STARTED", "recordId", dbRecordId));
+
+        log.info("[WS] START: sid={}, DB_ID={}, user={}", session.getId(), dbRecordId, st.auth.loginId);
     }
 
     private void onEnd(WebSocketSession session) {
