@@ -38,13 +38,15 @@ public class UserService {
         Long totalTimeSec = drivingRecordRepository.sumTotalTimeByUserId(userId);
         Double avgScore = drivingRecordRepository.findAverageScoreByUserId(userId);
 
-        // 초 -> 시간 변환 (소수점 한자리)
-        double totalTimeHours = (totalTimeSec != null) ? Math.round((totalTimeSec / 3600.0) * 10) / 10.0 : 0.0;
+        // [수정 후] 변환 없이 '초(Seconds)' 단위 그대로 전달
+        // (프론트엔드의 formatTotalDrivingTime 함수가 초 단위를 기대하므로)
+        double totalTimeSeconds = (totalTimeSec != null) ? totalTimeSec.doubleValue() : 0.0;
+
         float safeScore = (avgScore != null) ? avgScore.floatValue() : 0f;
 
         // 3. DTO에 통계 정보 설정
         response.setTotalDrivingCount(totalDriving);
-        response.setTotalDrivingTime(totalTimeHours);
+        response.setTotalDrivingTime(totalTimeSeconds);
         response.setSafeScore(safeScore);
 
         return response;
