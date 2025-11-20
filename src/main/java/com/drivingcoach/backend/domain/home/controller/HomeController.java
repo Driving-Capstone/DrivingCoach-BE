@@ -1,5 +1,7 @@
 package com.drivingcoach.backend.domain.home.controller;
 
+import com.drivingcoach.backend.domain.home.domain.dto.response.HomeMonthStatusResponse;
+import com.drivingcoach.backend.domain.home.domain.dto.response.HomeRecentRecordResponse;
 import com.drivingcoach.backend.domain.home.service.HomeService;
 import com.drivingcoach.backend.domain.home.domain.dto.response.WeeklyStatusResponse;
 import com.drivingcoach.backend.domain.user.domain.CustomUserDetails;
@@ -66,5 +68,15 @@ public class HomeController {
 
         WeeklyStatusResponse resp = homeService.buildWeeklyStatus(userId, from, to);
         return ApiResponse.ok(resp);
+    }
+
+    @GetMapping("/monthStatus")
+    public ApiResponse<HomeMonthStatusResponse> getMonthStatus(@AuthenticationPrincipal CustomUserDetails principal) {
+        return ApiResponse.ok(homeService.getMonthStatus(principal.getUserId()));
+    }
+
+    @GetMapping("/recentRecord")
+    public ApiResponse<HomeRecentRecordResponse> getRecentRecord(@AuthenticationPrincipal CustomUserDetails principal) {
+        return ApiResponse.ok(homeService.getRecentRecord(principal.getUserId()));
     }
 }

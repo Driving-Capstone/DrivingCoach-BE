@@ -87,5 +87,32 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional
+    public String reissueAccessToken(String refreshToken) {
+        // 1. Refresh Token 유효성 검사
+        if (!jwtUtil.isValid(refreshToken)) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        // 2. 토큰에서 사용자 정보 추출 (loginId 등)
+        String loginId = jwtUtil.getLoginId(refreshToken);
+
+        // 3. DB에서 사용자 조회
+        User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 4. 새 Access Token 발급 (CustomUserDetails 생성 필요)
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+        return jwtUtil.createAccessToken(userDetails);
+    }
+
+    @Transactional
+    public void deleteAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 실제 삭제(delete) 또는 비활성화(deactivate)
+        user.deactivate(); // 기존 User 엔티티의 비활성화 메서드 사용
+    }
+
 
 }
