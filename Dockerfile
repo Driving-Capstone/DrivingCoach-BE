@@ -24,6 +24,9 @@ FROM eclipse-temurin:17-jdk-alpine
 LABEL authors="lcy21"
 WORKDIR /app
 
+# (추가!) FFmpeg 설치
+RUN apk update && apk add --no-cache ffmpeg
+
 # (4) 빌드된 JAR만 복사
 COPY --from=builder /workspace/build/libs/*.jar app.jar
 

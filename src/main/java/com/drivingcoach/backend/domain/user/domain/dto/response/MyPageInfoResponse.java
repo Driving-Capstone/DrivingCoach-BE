@@ -30,4 +30,7 @@ public class MyPageInfoResponse {
 
     @Schema(description = "가입일", example = "2020-02-20")
     private LocalDate joinDay;
+
+    @Schema(description = "총 발생 이벤트 수", example = "15")
+    private Long totalEvents; // (추가!)
 }

@@ -1,35 +1,31 @@
 package com.drivingcoach.backend.domain.driving.domain.dto.response;
 
-// import com.fasterxml.jackson.annotation.JsonProperty; // (제거)
 import lombok.Data;
 import java.util.List;
 
 @Data
 public class AIAnalysisResultDto {
 
-    // @JsonProperty("s3_file_key") // (제거!)
-    private String s3FileKey; // AI가 camelCase(s3FileKey)로 보냄
-
-    // @JsonProperty("results_per_frame") // (제거!)
-    private List<FrameDetectionOutputDto> resultsPerFrame; // AI가 camelCase로 보냄
-
+    private String s3FileKey;
     private String status;
     private int chunkIndex;
 
+    // (추가!) AI가 탐지한 이벤트 ID 리스트 (예: [1, 11])
+    // 해당 청크(2초) 내에서 발생한 이벤트 번호들
+    private List<Integer> detectedEventIds;
+
+    private List<FrameDetectionOutputDto> resultsPerFrame;
+
     @Data
     public static class FrameDetectionOutputDto {
-        // @JsonProperty("frame_index") // (제거!)
-        private int frameIndex; // AI가 camelCase로 보냄
+        private int frameIndex;
         private List<DetectionBoxDto> detections;
     }
 
     @Data
     public static class DetectionBoxDto {
-        // @JsonProperty("class_name") // (제거!)
-        private String className; // AI가 camelCase로 보냄
+        private String className;
         private float confidence;
-
-        // @JsonProperty("box_xyxy") // (제거!)
-        private List<Float> boxXyxy; // AI가 camelCase로 보냄
+        private List<Float> boxXyxy;
     }
 }

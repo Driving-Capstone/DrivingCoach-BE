@@ -1,5 +1,6 @@
 package com.drivingcoach.backend.domain.user.service;
 
+import com.drivingcoach.backend.domain.driving.repository.DrivingEventRepository;
 import com.drivingcoach.backend.domain.driving.repository.DrivingRecordRepository;
 import com.drivingcoach.backend.domain.user.domain.dto.request.ChangePasswordRequest;
 import com.drivingcoach.backend.domain.user.domain.dto.request.UpdateUserProfileRequest;
@@ -24,10 +25,29 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final DrivingRecordRepository drivingRecordRepository;
+    private final DrivingEventRepository drivingEventRepository;
 
     public UserProfileResponse getProfile(Long userId) {
         User user = getActiveUserOrThrow(userId);
-        return UserProfileResponse.from(user);
+
+        // 1. 기본 유저 정보 변환
+        UserProfileResponse response = UserProfileResponse.from(user);
+
+        // 2. 통계 데이터 조회 및 계산 (마이페이지 로직 재사용)
+        long totalDriving = drivingRecordRepository.countByUserId(userId);
+        Long totalTimeSec = drivingRecordRepository.sumTotalTimeByUserId(userId);
+        Double avgScore = drivingRecordRepository.findAverageScoreByUserId(userId);
+
+        // 초 -> 시간 변환 (소수점 한자리)
+        double totalTimeHours = (totalTimeSec != null) ? Math.round((totalTimeSec / 3600.0) * 10) / 10.0 : 0.0;
+        float safeScore = (avgScore != null) ? avgScore.floatValue() : 0f;
+
+        // 3. DTO에 통계 정보 설정
+        response.setTotalDrivingCount(totalDriving);
+        response.setTotalDrivingTime(totalTimeHours);
+        response.setSafeScore(safeScore);
+
+        return response;
     }
 
     @Transactional
@@ -86,6 +106,9 @@ public class UserService {
         Long totalTimeSec = drivingRecordRepository.sumTotalTimeByUserId(userId);
         Double avgScore = drivingRecordRepository.findAverageScoreByUserId(userId);
 
+        // (추가!) 총 이벤트 수 조회
+        long totalEvents = drivingEventRepository.countAllEventsByUserId(userId);
+
         // 초 -> 시간 변환 (소수점 한자리)
         double totalTimeHours = (totalTimeSec != null) ? Math.round((totalTimeSec / 3600.0) * 10) / 10.0 : 0.0;
         float safeScore = (avgScore != null) ? avgScore.floatValue() : 0f;
@@ -94,6 +117,7 @@ public class UserService {
                 .allDriving(totalDriving)
                 .allTime(totalTimeHours)
                 .safeScore(safeScore)
+                .totalEvents(totalEvents) // (추가!)
                 .gender(user.getGender())
                 .birthDate(user.getBirthDate())
                 .joinDay(user.getCreatedAt().toLocalDate())

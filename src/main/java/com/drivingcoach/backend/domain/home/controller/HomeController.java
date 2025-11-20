@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 import java.time.*;
 
@@ -75,8 +76,14 @@ public class HomeController {
         return ApiResponse.ok(homeService.getMonthStatus(principal.getUserId()));
     }
 
+    /**
+     * 최근 주행 기록 5건 조회 (수정됨)
+     * 반환 타입: ApiResponse<List<HomeRecentRecordResponse>>
+     */
+    @Operation(summary = "최근 주행 기록 (상위 5개)", description = "가장 최근 주행 기록 5건을 리스트로 반환합니다.")
     @GetMapping("/recentRecord")
-    public ApiResponse<HomeRecentRecordResponse> getRecentRecord(@AuthenticationPrincipal CustomUserDetails principal) {
-        return ApiResponse.ok(homeService.getRecentRecord(principal.getUserId()));
+    public ApiResponse<List<HomeRecentRecordResponse>> getRecentRecords(@AuthenticationPrincipal CustomUserDetails principal) {
+        List<HomeRecentRecordResponse> response = homeService.getRecentRecords(principal.getUserId());
+        return ApiResponse.ok(response);
     }
 }
