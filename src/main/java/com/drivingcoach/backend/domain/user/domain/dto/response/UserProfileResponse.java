@@ -45,8 +45,19 @@ public class UserProfileResponse {
     @Schema(description = "수정일시", example = "2025-09-27T08:10:11")
     private LocalDateTime updatedAt;
 
+    // --- 추가된 통계 필드 ---
+    @Schema(description = "총 주행 횟수", example = "127")
+    private Long totalDrivingCount;
+
+    @Schema(description = "총 주행 시간(시간 단위)", example = "45.3")
+    private Double totalDrivingTime;
+
+    @Schema(description = "안전 점수 평균", example = "85")
+    private Float safeScore;
+
     /**
      * Entity → DTO 변환 헬퍼
+     * (기본 User 정보만 매핑, 통계는 서비스에서 별도 주입)
      */
     public static UserProfileResponse from(User user) {
         return UserProfileResponse.builder()
