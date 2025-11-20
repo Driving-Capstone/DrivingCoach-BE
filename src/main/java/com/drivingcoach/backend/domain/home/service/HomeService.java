@@ -52,10 +52,16 @@ public class HomeService {
         // 2) 평균 점수 (null 가능)
         Double avgScore = drivingRecordRepository.averageScoreByUserIdAndPeriod(userId, from, to);
 
-        // 3) 일자별 버킷 합계
+        // 3) (추가) 총 주행 횟수
+        long drivingCount = drivingRecordRepository.countByUserIdAndStartTimeBetween(userId, from, to);
+
+        // 4) (추가) 총 이벤트 발생 횟수
+        long eventCount = drivingRecordRepository.countEventsByUserIdAndPeriod(userId, from, to);
+
+        // 5) 일자별 버킷 합계
         List<WeeklyStatusResponse.DayBucket> buckets = aggregateDailySeconds(userId, from, to);
 
-        // 4) 마지막 주행(최근 1건) 요약 (선택: 홈 화면 카드용)
+        // 6) 마지막 주행(최근 1건) 요약 (선택: 홈 화면 카드용)
         DrivingRecord last = drivingRecordRepository
                 .findTop1ByUserIdOrderByStartTimeDesc(userId, PageRequest.of(0, 1))
                 .stream().findFirst().orElse(null);
@@ -75,6 +81,8 @@ public class HomeService {
                 .from(from)
                 .to(to)
                 .totalSeconds(totalSec)
+                .totalDrivingCount(drivingCount) // (추가)
+                .totalEventCount(eventCount)     // (추가)
                 .averageScore(avgScore)
                 .dailySeconds(buckets)
                 .lastDriving(lastDriving)

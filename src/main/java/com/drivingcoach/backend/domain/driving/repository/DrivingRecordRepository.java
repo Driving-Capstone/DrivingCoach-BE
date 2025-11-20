@@ -187,4 +187,24 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord, Lo
                                                           @Param("year") int year,
                                                           @Param("month") int month,
                                                           @Param("day") int day);
+
+    /**
+     * (추가) 특정 기간 내 주행 횟수 카운트
+     */
+    long countByUserIdAndStartTimeBetween(Long userId, LocalDateTime from, LocalDateTime to);
+    /**
+     * (추가) 특정 기간 내 발생한 총 이벤트(DrivingEvent) 개수 카운트
+     * - DrivingEvent와 Join하여 개수를 셉니다.
+     */
+    @Query("""
+           select count(e)
+             from DrivingEvent e
+             join e.drivingRecord dr
+            where dr.user.id = :userId
+              and dr.startTime >= :from
+              and dr.startTime < :to
+           """)
+    long countEventsByUserIdAndPeriod(@Param("userId") Long userId,
+                                      @Param("from") LocalDateTime from,
+                                      @Param("to") LocalDateTime to);
 }
