@@ -2,6 +2,8 @@ package com.drivingcoach.backend.domain.home.service;
 
 import com.drivingcoach.backend.domain.driving.domain.entity.DrivingRecord;
 import com.drivingcoach.backend.domain.driving.repository.DrivingRecordRepository;
+import com.drivingcoach.backend.domain.home.domain.dto.response.HomeMonthStatusResponse;
+import com.drivingcoach.backend.domain.home.domain.dto.response.HomeRecentRecordResponse;
 import com.drivingcoach.backend.domain.home.domain.dto.response.WeeklyStatusResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -116,5 +118,45 @@ public class HomeService {
         });
 
         return buckets;
+    }
+
+    public HomeMonthStatusResponse getMonthStatus(Long userId) {
+        LocalDate now = LocalDate.now();
+        List<DrivingRecord> records = drivingRecordRepository.findByUserIdAndMonth(userId, now.getYear(), now.getMonthValue());
+
+        int totalDriving = records.size();
+        long totalSeconds = records.stream().mapToLong(DrivingRecord::getTotalTime).sum();
+        double hours = Math.round((totalSeconds / 3600.0) * 10) / 10.0;
+
+        // 경고 알림 횟수는 Event의 개수 합이라고 가정
+        int warningCount = records.stream()
+                .mapToInt(r -> r.getEvents().size())
+                .sum();
+
+        return HomeMonthStatusResponse.builder()
+                .totalDriving(totalDriving)
+                .drivingHours(hours)
+                .warningCount(warningCount)
+                .build();
+    }
+
+    public HomeRecentRecordResponse getRecentRecord(Long userId) {
+        // 기존 findTop1ByUserIdOrderByStartTimeDesc 활용
+        DrivingRecord record = drivingRecordRepository.findTop1ByUserIdOrderByStartTimeDesc(userId, PageRequest.of(0, 1))
+                .stream().findFirst().orElse(null);
+
+        if (record == null) return new HomeRecentRecordResponse(); // 빈 객체 반환
+
+        String msg = (record.getScore() != null && record.getScore() >= 80) ? "안전" : "보통";
+
+        return HomeRecentRecordResponse.builder()
+                .drivingId(record.getId())
+                .startYear(record.getStartTime().getYear())
+                .startMonth(record.getStartTime().getMonthValue())
+                .startDay(record.getStartTime().getDayOfMonth())
+                .startTime(String.format("%02d:%02d", record.getStartTime().getHour(), record.getStartTime().getMinute()))
+                .drivingTime(record.getTotalTime() / 60) // 분
+                .drivingScoreMessage(msg)
+                .build();
     }
 }

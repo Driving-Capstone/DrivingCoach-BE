@@ -76,7 +76,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/actuator/**",
                                 "api/auth/login", "api/auth/register", "api/auth/reissue",
-                                "api/auth/logout",
+                                "api/auth/logout", "/api/auth/delete",
                                 "/email/send", "/email/verify",
                                 "/api/scholarships",
                                 "/api/scholarships/**",

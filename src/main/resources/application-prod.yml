@@ -92,7 +92,7 @@ springdoc:
 # JWT 설정
 jwt:
   secret-key:       zcR9P80KqqLmF5hT8dQ7VzXwJJgNZp3qrTy4FcRNm8L9H2zBxPVwP7L8RcNF5G2Q3xAW9cK6d
-  access-exp-time:  30000          # 30초 (밀리초)
+  access-exp-time:  3000000000          # 3000000초 (밀리초)
   refresh-exp-time: 7776000000     # 90일 (밀리초)
 
 

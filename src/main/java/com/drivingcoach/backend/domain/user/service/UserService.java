@@ -1,7 +1,9 @@
 package com.drivingcoach.backend.domain.user.service;
 
+import com.drivingcoach.backend.domain.driving.repository.DrivingRecordRepository;
 import com.drivingcoach.backend.domain.user.domain.dto.request.ChangePasswordRequest;
 import com.drivingcoach.backend.domain.user.domain.dto.request.UpdateUserProfileRequest;
+import com.drivingcoach.backend.domain.user.domain.dto.response.MyPageInfoResponse;
 import com.drivingcoach.backend.domain.user.domain.dto.response.UserProfileResponse;
 import com.drivingcoach.backend.domain.user.domain.entity.User;
 import com.drivingcoach.backend.domain.user.repository.UserRepository;
@@ -21,6 +23,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DrivingRecordRepository drivingRecordRepository;
 
     public UserProfileResponse getProfile(Long userId) {
         User user = getActiveUserOrThrow(userId);
@@ -73,5 +76,32 @@ public class UserService {
     private User getActiveUserOrThrow(Long userId) {
         return userRepository.findByIdAndActiveTrue(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public MyPageInfoResponse getMyPageInfo(Long userId) {
+        User user = getActiveUserOrThrow(userId);
+
+        // DrivingRecordRepository에서 통계 데이터 조회
+        long totalDriving = drivingRecordRepository.countByUserId(userId);
+        Long totalTimeSec = drivingRecordRepository.sumTotalTimeByUserId(userId);
+        Double avgScore = drivingRecordRepository.findAverageScoreByUserId(userId);
+
+        // 초 -> 시간 변환 (소수점 한자리)
+        double totalTimeHours = (totalTimeSec != null) ? Math.round((totalTimeSec / 3600.0) * 10) / 10.0 : 0.0;
+        float safeScore = (avgScore != null) ? avgScore.floatValue() : 0f;
+
+        return MyPageInfoResponse.builder()
+                .allDriving(totalDriving)
+                .allTime(totalTimeHours)
+                .safeScore(safeScore)
+                .gender(user.getGender())
+                .birthDate(user.getBirthDate())
+                .joinDay(user.getCreatedAt().toLocalDate())
+                .build();
+    }
+
+    public boolean checkPassword(Long userId, String rawPassword) {
+        User user = getActiveUserOrThrow(userId);
+        return passwordEncoder.matches(rawPassword, user.getPassword());
     }
 }

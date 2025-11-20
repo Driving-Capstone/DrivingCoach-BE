@@ -140,4 +140,51 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord, Lo
      * - 단, 위 JPQL 커스텀 쿼리들과 중복 사용은 지양하고 팀 컨벤션에 맞춰 통일하세요.
      */
     Page<DrivingRecord> findByUserOrderByStartTimeDesc(User user, Pageable pageable);
+
+    /** 사용자별 총 주행 횟수 조회 */
+    long countByUserId(Long userId);
+
+    /** 사용자별 총 주행 시간(초) 합계 조회 */
+    @Query("select coalesce(sum(dr.totalTime), 0) from DrivingRecord dr where dr.user.id = :userId")
+    Long sumTotalTimeByUserId(@Param("userId") Long userId);
+
+    /** 사용자별 평균 점수 조회 */
+    @Query("select avg(dr.score) from DrivingRecord dr where dr.user.id = :userId")
+    Double findAverageScoreByUserId(@Param("userId") Long userId);
+
+    // 1. 이번 달 통계용 (월간 집계)
+    @Query("select dr from DrivingRecord dr where dr.user.id = :userId and year(dr.startTime) = :year and month(dr.startTime) = :month")
+    List<DrivingRecord> findByUserIdAndMonth(@Param("userId") Long userId, @Param("year") int year, @Param("month") int month);
+
+    // 2. 주행 시간 순 정렬 (내림차순)
+    @Query("select dr from DrivingRecord dr where dr.user.id = :userId order by dr.totalTime desc")
+    List<DrivingRecord> findAllByUserIdOrderByTotalTimeDesc(@Param("userId") Long userId);
+
+    // 3. 날짜 필터링 (연, 월, 일) + 최신순
+    @Query("""
+           select dr from DrivingRecord dr
+           where dr.user.id = :userId
+             and year(dr.startTime) = :year
+             and month(dr.startTime) = :month
+             and day(dr.startTime) = :day
+           order by dr.startTime desc
+           """)
+    List<DrivingRecord> findAllByDateOrderByStartTimeDesc(@Param("userId") Long userId,
+                                                          @Param("year") int year,
+                                                          @Param("month") int month,
+                                                          @Param("day") int day);
+
+    // 4. 날짜 필터링 + 주행시간순
+    @Query("""
+           select dr from DrivingRecord dr
+           where dr.user.id = :userId
+             and year(dr.startTime) = :year
+             and month(dr.startTime) = :month
+             and day(dr.startTime) = :day
+           order by dr.totalTime desc
+           """)
+    List<DrivingRecord> findAllByDateOrderByTotalTimeDesc(@Param("userId") Long userId,
+                                                          @Param("year") int year,
+                                                          @Param("month") int month,
+                                                          @Param("day") int day);
 }
