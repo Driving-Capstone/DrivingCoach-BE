@@ -10,10 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * ✅ HomeService
@@ -140,23 +142,35 @@ public class HomeService {
                 .build();
     }
 
-    public HomeRecentRecordResponse getRecentRecord(Long userId) {
-        // 기존 findTop1ByUserIdOrderByStartTimeDesc 활용
-        DrivingRecord record = drivingRecordRepository.findTop1ByUserIdOrderByStartTimeDesc(userId, PageRequest.of(0, 1))
-                .stream().findFirst().orElse(null);
+    /**
+     * 최근 주행 기록 5건 조회 (수정됨)
+     */
+    public List<HomeRecentRecordResponse> getRecentRecords(Long userId) {
+        // 1. 최근순으로 5개 조회 (PageRequest 사용)
+        List<DrivingRecord> records = drivingRecordRepository.findAllByUserIdOrderByStartTimeDesc(
+                userId,
+                PageRequest.of(0, 5) // 0페이지, 사이즈 5
+        ).getContent();
 
-        if (record == null) return new HomeRecentRecordResponse(); // 빈 객체 반환
+        // 2. 엔티티 리스트 -> DTO 리스트 변환
+        return records.stream()
+                .map(record -> {
+                    // 점수에 따른 메시지 로직 (기존 로직 유지 또는 수정)
+                    String msg = (record.getScore() != null && record.getScore() >= 80) ? "안전" : "보통";
+                    if (record.getScore() != null && record.getScore() < 60) msg = "주의"; // 예시 추가
 
-        String msg = (record.getScore() != null && record.getScore() >= 80) ? "안전" : "보통";
-
-        return HomeRecentRecordResponse.builder()
-                .drivingId(record.getId())
-                .startYear(record.getStartTime().getYear())
-                .startMonth(record.getStartTime().getMonthValue())
-                .startDay(record.getStartTime().getDayOfMonth())
-                .startTime(String.format("%02d:%02d", record.getStartTime().getHour(), record.getStartTime().getMinute()))
-                .drivingTime(record.getTotalTime() / 60) // 분
-                .drivingScoreMessage(msg)
-                .build();
+                    return HomeRecentRecordResponse.builder()
+                            .drivingId(record.getId())
+                            .startYear(record.getStartTime().getYear())
+                            .startMonth(record.getStartTime().getMonthValue())
+                            .startDay(record.getStartTime().getDayOfMonth())
+                            // 시:분 형식 포맷팅
+                            .startTime(String.format("%02d:%02d", record.getStartTime().getHour(), record.getStartTime().getMinute()))
+                            // 초 -> 분 변환 (예: 60초 -> 1분)
+                            .drivingTime(record.getTotalTime() / 60)
+                            .drivingScoreMessage(msg)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }
